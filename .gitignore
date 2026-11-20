@@ -1,0 +1,7 @@
+# macOS
+.DS_Store
+
+# AI tooling, not part of the site
+.agents/
+.claude/
+skills-lock.json

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Résumé · Mihir Mahesh</title>
+  <meta name="description" content="Résumé of Mihir Mahesh: Computer Science (Honors) and Mathematics at the University of Maryland." />
+  <meta name="theme-color" content="#1f78d6" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <!-- Link previews (LinkedIn, iMessage, Slack...). Once the site is hosted, make og:image a full URL, e.g. https://yourdomain/og-image.png -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Résumé · Mihir Mahesh" />
+  <meta property="og:description" content="Résumé of Mihir Mahesh: Computer Science (Honors) and Mathematics at the University of Maryland." />
+  <meta property="og:image" content="og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Atkinson+Hyperlegible+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="reading">
+  <div class="night-sky" aria-hidden="true"></div>
+
+  <header class="nav scrolled">
+    <a class="plank brand" href="index.html#top" data-initials></a>
+    <nav>
+      <a class="plank" href="index.html#about">About</a>
+      <a class="plank" href="index.html#experience">Experience</a>
+      <a class="plank" href="index.html#publications">Publications</a>
+      <a class="plank" href="index.html#projects">Projects</a>
+      <a class="plank" href="index.html#skills">Skills</a>
+      <a class="plank" href="monkeying-around.html">Monkeying around</a>
+    </nav>
+    <button class="plank lights-toggle" type="button" aria-pressed="false">
+      <span class="lt-icon" aria-hidden="true">☾</span> <span class="lt-label">Lights off</span>
+    </button>
+  </header>
+
+  <!-- The whole résumé on one sheet, built from content.js. Prints cleanly to PDF. -->
+  <main class="reader">
+    <div class="resume-actions">
+      <a class="plank back-plank" href="index.html#top">← Back to the jungle</a>
+      <button class="plank print-plank" type="button">⎙ Print or save as PDF</button>
+    </div>
+    <article class="card paper resume" data-resume></article>
+  </main>
+
+  <footer class="reader-footer">
+    <p class="footer-note" data-copyright></p>
+  </footer>
+
+  <script src="content.js"></script>
+  <script src="main.js"></script>
+  <script src="resume.js"></script>
+</body>
+</html>

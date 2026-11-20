@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- A monkey holding up a wooden "MM" sign, the site's mascot -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M17 56 Q8 44 9 26 M47 56 Q56 44 55 26" stroke="#3b2410" stroke-width="8"/>
+    <path d="M17 56 Q8 44 9 26 M47 56 Q56 44 55 26" stroke="#8b5a2b" stroke-width="4.5"/>
+  </g>
+  <rect x="2.5" y="3.5" width="59" height="24" rx="4" fill="#fffaf0" stroke="#a8713d" stroke-width="3"/>
+  <path d="M11 22.5V9l8 8.5 8-8.5v13.5M37 22.5V9l8 8.5 8-8.5v13.5" fill="none" stroke="#3b2410" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="9" cy="27" r="3.6" fill="#f3d3a8" stroke="#3b2410" stroke-width="1.5"/>
+  <circle cx="55" cy="27" r="3.6" fill="#f3d3a8" stroke="#3b2410" stroke-width="1.5"/>
+  <g transform="translate(2 17) scale(0.5)">
+    <circle cx="35" cy="60" r="9" fill="#8b5a2b" stroke="#3b2410" stroke-width="3"/><circle cx="35" cy="60" r="4.5" fill="#f3d3a8"/>
+    <circle cx="85" cy="60" r="9" fill="#8b5a2b" stroke="#3b2410" stroke-width="3"/><circle cx="85" cy="60" r="4.5" fill="#f3d3a8"/>
+    <circle cx="60" cy="58" r="26" fill="#8b5a2b" stroke="#3b2410" stroke-width="3"/>
+    <path fill="#f3d3a8" d="M60 49 C54 39 37 41 39 56 C40 65 43 71 46 75 C51 83 69 83 74 75 C77 71 80 65 81 56 C83 41 66 39 60 49Z"/>
+    <ellipse cx="51" cy="57" rx="5.4" ry="6.4" fill="#fff" stroke="#3b2410" stroke-width="1.8"/>
+    <ellipse cx="69" cy="57" rx="5.4" ry="6.4" fill="#fff" stroke="#3b2410" stroke-width="1.8"/>
+    <circle cx="52" cy="58" r="3.2" fill="#1e120a"/><circle cx="70" cy="58" r="3.2" fill="#1e120a"/>
+    <path d="M50 70 Q60 86 70 70 Z" fill="#7a1f1f" stroke="#3b2410" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+</svg>

@@ -1,0 +1,944 @@
+/* Cartoon jungle: blue sky, a forest of signs, and the monkeys holding them */
+:root {
+  --sky-top: #1f78d6;
+  --sky-mid: #3d9cf0;
+  --sky-low: #5cb2f5;
+
+  --cream: #fffaf0;
+  --wood: #a8713d;
+  --wood-dark: #6b4423;
+  --line: rgba(107, 68, 35, 0.16);
+
+  --text: #2a2118;
+  --muted: #5e5141;
+  --faint: #8a7a64;
+
+  --blue: #1d6fd0;
+  --green: #2f8a3a;
+  --sun: #b8650c;
+
+  /* Sign colours (swapped for dimmer ones at night) */
+  --body-copy: #3d3226;
+  --chip-bg: #fbf0dc;
+  --chip-line: #e6d3b0;
+  --chip-text: #5b3d1e;
+  --badge-bg: #fff;
+
+  /* Monkey size and colours */
+  --m: clamp(72px, 8.6vw, 124px);
+  --fur: #8b5a2b;
+  --face: #f3d3a8;
+  --ink: #3b2410;
+
+  --radius: 16px;
+  --sky-time: 2.4s;
+
+  /* Lilita One reads like painted signage; Atkinson Hyperlegible was designed
+     for legibility (by the Braille Institute) and has a matching mono */
+  --display: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --sans: "Atkinson Hyperlegible Next", system-ui, -apple-system, sans-serif;
+  --mono: "Atkinson Hyperlegible Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 80px; background: var(--sky-top); }
+
+body {
+  position: relative;
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--sky-top) 0, var(--sky-mid) 100vh, var(--sky-low) 170vh, var(--sky-low) 100%);
+  color: var(--text);
+  font: 400 16px/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: inherit; }
+
+::selection { background: rgba(29, 111, 208, 0.22); }
+
+/* Night: signs become dark boards with soft, light writing */
+body.night {
+  --cream: #2e271f;
+  --wood: #6e4a2b;
+  --wood-dark: #4a2f19;
+  --text: #ece1cd;
+  --muted: #b8a990;
+  --faint: #8e8170;
+  --body-copy: #d8cbb4;
+  --blue: #8db8f2;
+  --sun: #e2a560;
+  --chip-bg: #3a3128;
+  --chip-line: #54463a;
+  --chip-text: #e1d1b5;
+  --badge-bg: #e9e2d4;
+  --line: rgba(236, 225, 205, 0.12);
+}
+.card, .card :is(h3, p, li, span, strong, a), .chip, .logo, .footer-email {
+  transition: background-color var(--sky-time) ease 0.3s, color var(--sky-time) ease 0.3s, border-color var(--sky-time) ease 0.3s;
+}
+body.night .section-title { filter: brightness(0.72); }
+body.night .org-link { text-decoration-color: rgba(236, 225, 205, 0.3); }
+body.night .footer-email { color: var(--text); }
+
+/* Used when restoring a saved day/night choice so it doesn't animate in */
+.instant, .instant * { transition: none !important; }
+
+/* Anything scrolled out of view stops animating (set by sky.js / forest.js) */
+.paused, .paused * { animation-play-state: paused !important; }
+
+/* ---------- Layers ----------
+   sky (body) → night sky (0) → sun and moon (0) → clouds (0, later) → forest (1) → content and monkeys (2) */
+.night-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--sky-time) ease 0.3s;
+  background: linear-gradient(180deg, #0a1433 0, #142a5c 100vh, #1b3466 170vh, #1b3466 100%);
+}
+/* A sprinkle of stars in the night sky */
+.night-sky::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 130vh;
+  background-image:
+    radial-gradient(1.5px 1.5px at 30px 40px, #fff 50%, transparent 52%),
+    radial-gradient(1px 1px at 140px 90px, #fff 50%, transparent 52%),
+    radial-gradient(2px 2px at 220px 30px, #fff7c2 50%, transparent 52%),
+    radial-gradient(1px 1px at 80px 170px, #fff 50%, transparent 52%),
+    radial-gradient(1.5px 1.5px at 260px 200px, #dfe8ff 50%, transparent 52%),
+    radial-gradient(1px 1px at 180px 250px, #fff 50%, transparent 52%);
+  background-size: 300px 280px, 410px 370px, 530px 460px, 370px 330px, 470px 520px, 350px 410px;
+  -webkit-mask-image: linear-gradient(#000 60%, transparent);
+  mask-image: linear-gradient(#000 60%, transparent);
+}
+
+body.night .night-sky { opacity: 1; }
+
+/* Clouds (built by sky.js). Drifting and bobbing are transform-only
+   animations, so they run on the compositor without repainting. */
+.clouds {
+  position: absolute;
+  inset: 0 0 -280px;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: filter var(--sky-time) ease 0.3s;
+  /* Clouds thin out as they pass behind the name and intro */
+  -webkit-mask-image: radial-gradient(ellipse 30% 24% at 33% calc(50% - 140px), rgba(0, 0, 0, 0.4) 40%, #000 100%);
+  mask-image: radial-gradient(ellipse 30% 24% at 33% calc(50% - 140px), rgba(0, 0, 0, 0.4) 40%, #000 100%);
+}
+body.night .clouds { filter: brightness(0.5) sepia(0.6) hue-rotate(180deg) saturate(1.6); }
+
+.cloud {
+  position: absolute;
+  left: 0;
+  transform: translateX(var(--x0));
+  animation: drift var(--dur) linear infinite var(--delay);
+}
+.cloud svg { display: block; width: 100%; height: auto; animation: float 7s ease-in-out infinite alternate var(--bob-delay); }
+@keyframes drift {
+  from { transform: translateX(calc(-1 * var(--w))); }
+  to { transform: translateX(100vw); }
+}
+@keyframes float { to { transform: translateY(6px); } }
+
+.forest {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.forest > svg { position: absolute; inset: 0; display: block; }
+
+main, .scene-content, .footer-content { position: relative; z-index: 2; }
+
+/* ---------- Nav ---------- */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px clamp(16px, 5vw, 56px);
+  color: #fff;
+  border-bottom: 1px solid transparent;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+.nav.scrolled {
+  color: var(--text);
+  background: rgba(255, 250, 240, 0.96);
+  border-color: var(--line);
+}
+body.night .nav.scrolled { color: #fff; background: rgba(12, 22, 50, 0.96); border-color: rgba(255, 255, 255, 0.08); }
+
+/* Everything in the top bar is a small nailed-on plank, same wood as the signs.
+   Planks tilt a little, alternating, and straighten up on hover. */
+.plank {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding: 7px 14px;
+  font: 600 13px/1 var(--sans);
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  background: var(--cream);
+  border: 3px solid var(--wood);
+  border-radius: 8px;
+  transform: rotate(-1.5deg);
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color var(--sky-time) ease 0.3s, color var(--sky-time) ease 0.3s, border-color var(--sky-time) ease 0.3s;
+}
+.plank:nth-child(even) { transform: rotate(1.2deg); }
+.plank::before, .plank::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background: var(--wood);
+}
+.plank::before { left: 3px; }
+.plank::after { right: 3px; }
+.plank:hover { transform: rotate(0deg); }
+.plank:active { transform: rotate(0deg) scale(0.96); }
+.plank:focus-visible { outline: 3px solid #ffd54a; outline-offset: 3px; }
+/* The page you're on is painted banana yellow */
+.plank[aria-current="page"] { background: #ffd54f; border-color: #c48a12; color: #3b2410; }
+body.night .plank[aria-current="page"] { background: #8a6a1c; border-color: #5e4510; color: #fff3cf; }
+
+.brand { padding: 6px 10px; font: 400 18px/1 var(--display); letter-spacing: 0.03em; }
+
+/* Room around the planks so their tilted corners aren't clipped by the scroller */
+.nav nav { display: flex; gap: 10px; margin-left: auto; padding: 4px; overflow-x: auto; scrollbar-width: none; }
+.nav nav::-webkit-scrollbar { display: none; }
+
+.mt-icon { width: 13px; height: 13px; fill: var(--wood); }
+.mt-play, .still .mt-pause { display: none; }
+.still .mt-play { display: inline; }
+
+/* ---------- Opening scene ---------- */
+.scene {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Photo size; the top padding leaves room for the parachute above it */
+  --photo-w: clamp(200px, 21vw, 290px);
+  padding: calc(var(--photo-w) * 0.78 + 70px) clamp(16px, 5vw, 40px) 230px;
+  color: #fff;
+}
+
+.nav-sentinel { position: absolute; top: 60vh; left: 0; width: 1px; height: 1px; pointer-events: none; }
+
+/* ---------- Sun and moon ----------
+   Each sits in an "orbit" that moves sideways while the body inside moves
+   up or down on a different curve, so together they travel in an arc. */
+.celestial {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  --size: clamp(80px, 9vw, 124px);
+}
+.orbit {
+  position: absolute;
+  top: clamp(84px, 12vh, 120px);
+  left: max(24px, 6vw);
+  transition: transform var(--sky-time) cubic-bezier(0.3, 0.1, 0.4, 1);
+}
+.sun, .moon {
+  position: relative;
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
+}
+.sun > svg, .moon > svg { position: relative; width: 100%; height: 100%; overflow: visible; display: block; transition: transform 0.25s ease; }
+.sun:hover > svg, .moon:hover > svg { transform: scale(1.07); }
+.sun:active > svg, .moon:active > svg { transform: scale(0.95); }
+.sun:focus-visible, .moon:focus-visible { outline: 3px dashed #fff; outline-offset: 8px; }
+
+/* Soft glow behind each */
+.sun::before, .moon::before {
+  content: "";
+  position: absolute;
+  inset: -70%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+.sun::before { background: radial-gradient(circle, rgba(255, 244, 190, 0.7), rgba(255, 236, 160, 0.2) 40%, transparent 68%); }
+.moon::before { background: radial-gradient(circle, rgba(220, 230, 255, 0.45), rgba(200, 215, 255, 0.12) 40%, transparent 68%); }
+
+.rays-wrap { position: absolute; inset: 0; animation: spin 40s linear infinite; }
+.rays-wrap svg { width: 100%; height: 100%; overflow: visible; display: block; }
+.sun .rays { fill: #ffc928; transition: fill var(--sky-time) ease; }
+.sun .core { fill: #ffe066; stroke: #f5a623; stroke-width: 3; transition: fill var(--sky-time) ease, stroke var(--sky-time) ease; }
+.sun .sleepy { opacity: 0; transition: opacity 0.4s ease; }
+.sun .awake { transition: opacity 0.4s ease; }
+.sun:hover .rays-wrap { animation-duration: 6s; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.moon .zzz { position: absolute; top: 8%; right: 0; font: 700 clamp(12px, 1.3vw, 17px)/1 var(--sans); color: #f7f2d8; pointer-events: none; animation: zzz 2.6s ease-in-out infinite; }
+@keyframes zzz {
+  0% { opacity: 0; transform: translate(0, 6px); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translate(8px, -12px); }
+}
+
+/* Day: sun up, moon below the horizon to the right */
+.sun-orbit { transition-delay: 0.9s; }
+.sun { transition: transform var(--sky-time) cubic-bezier(0.2, 0.7, 0.3, 1) 0.9s; }
+.moon-orbit { transform: translateX(16vw); transition-delay: 0s; }
+.moon { transform: translateY(calc(100vh + 200px)); transition: transform var(--sky-time) cubic-bezier(0.6, 0, 0.8, 0.4) 0s; }
+
+/* Night: the sun sinks off to the left, glowing orange and dozing off; the moon rises */
+body.night .sun-orbit { transform: translateX(-22vw); transition-delay: 0s; }
+body.night .sun { transform: translateY(calc(100vh + 200px)) rotate(-30deg); transition: transform var(--sky-time) cubic-bezier(0.6, 0, 0.8, 0.4) 0s; }
+body.night .sun .core { fill: #ff9a3d; stroke: #e0662a; }
+body.night .sun .rays { fill: #ff7a3d; }
+body.night .sun .awake { opacity: 0; }
+body.night .sun .sleepy { opacity: 1; }
+body.night .moon-orbit { transform: none; transition-delay: 0.9s; }
+body.night .moon { transform: none; transition: transform var(--sky-time) cubic-bezier(0.2, 0.7, 0.3, 1) 0.9s; }
+
+.hero {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1160px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 72px);
+}
+.scene-content { max-width: 640px; text-align: left; }
+
+.eyebrow { margin: 0 0 18px; font: 500 13px/1.4 var(--mono); letter-spacing: 0.04em; text-shadow: 0 1px 10px rgba(10, 60, 130, 0.45); }
+
+h1 {
+  margin: 0;
+  font: 400 clamp(50px, 9.4vw, 104px)/1 var(--display);
+  letter-spacing: 0.005em;
+  text-shadow: 0 2px 30px rgba(10, 60, 130, 0.35);
+}
+
+.lede {
+  max-width: 34em;
+  margin: 24px 0 32px;
+  font-size: clamp(16px, 1.7vw, 18px);
+  text-shadow: 0 1px 14px rgba(10, 55, 120, 0.6), 0 0 3px rgba(10, 55, 120, 0.35);
+}
+
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* ---------- Photo, carried by a parachuting monkey ---------- */
+/* The frame is centred against the text; the parachute hangs above it
+   without taking up layout space */
+.para {
+  position: relative;
+  justify-self: center;
+  width: var(--photo-w);
+  transform-origin: 50% 0;
+  animation: struggle 5s ease-in-out infinite;
+}
+/* (.para prefix so this wins over the sign monkeys' sizing) */
+.para .para-monkey {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - var(--photo-w) * 0.06); /* hands overlap the frame's top edge */
+  width: calc(var(--photo-w) * 0.62);
+  height: auto;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.para-monkey svg { display: block; width: 100%; height: auto; overflow: visible; }
+/* Sinks under the weight, then claws back up, swaying the whole time */
+@keyframes struggle {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  30% { transform: translateY(14px) rotate(1.5deg); }
+  55% { transform: translateY(4px) rotate(2.5deg); }
+  80% { transform: translateY(16px) rotate(-1deg); }
+}
+
+.photo-frame {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 1084 / 1358;
+  border: 9px solid var(--wood);
+  border-radius: 14px;
+  background: var(--cream);
+  overflow: hidden;
+  transition: filter var(--sky-time) ease 0.3s;
+}
+.photo-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Placeholder until assets/photo.jpg exists */
+.photo-frame.empty img { display: none; }
+.photo-frame.empty::after {
+  content: "your photo here";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 500 14px/1 var(--mono);
+  color: var(--faint);
+}
+body.night .photo-frame { filter: brightness(0.75) saturate(0.85); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  font: 500 14px/1 var(--sans);
+  text-decoration: none;
+  color: #fff;
+  background: rgba(22, 92, 182, 0.72);
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+.btn:hover { background: rgba(30, 108, 205, 0.9); }
+.btn:active { transform: scale(0.97); }
+.btn-primary { color: #1d6fd0; background: #fff; border-color: #fff; }
+.btn-primary:hover { background: #eef6ff; }
+body.night .btn-primary { color: #142c55; background: #dfe6f3; border-color: #dfe6f3; }
+
+
+/* ---------- Layout ---------- */
+main { max-width: 1080px; margin: 0 auto; padding: 0 clamp(16px, 5vw, 40px); }
+
+.section { padding: clamp(56px, 8vw, 84px) 0 0; }
+
+/* Section titles are wooden planks */
+.section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 28px;
+  padding: 10px 22px 12px;
+  font: 400 clamp(25px, 3.4vw, 32px)/1.1 var(--display);
+  letter-spacing: 0.01em;
+  color: #fff8ec;
+  background:
+    repeating-linear-gradient(178deg, transparent 0 9px, rgba(70, 40, 15, 0.12) 9px 11px),
+    linear-gradient(180deg, #b98149, #96612f);
+  border: 3px solid var(--wood-dark);
+  border-radius: 10px;
+  transform: rotate(-1.2deg);
+}
+.section:nth-child(even) .section-title { transform: rotate(1deg); }
+.section-title span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font: 500 12px/1 var(--mono);
+  color: var(--wood-dark);
+  background: #fff1d6;
+}
+
+/* ---------- Signs ---------- */
+/* Cream boards in wooden frames, with a nail in each corner */
+.card {
+  position: relative;
+  padding: clamp(20px, 3vw, 28px);
+  border: 5px solid var(--wood);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 12px 12px, var(--wood-dark) 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 12px) 12px, var(--wood-dark) 2.5px, transparent 3px),
+    radial-gradient(circle at 12px calc(100% - 12px), var(--wood-dark) 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 12px) calc(100% - 12px), var(--wood-dark) 2.5px, transparent 3px),
+    var(--cream);
+}
+
+h3 { margin: 0; font: 600 18px/1.35 var(--sans); }
+
+.muted { color: var(--muted); }
+
+.date { font: 500 12px/1.4 var(--mono); color: var(--sun); white-space: nowrap; }
+
+.label { margin: 22px 0 10px; font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+
+.chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--chip-line);
+  background: var(--chip-bg);
+  font-size: 13px;
+  color: var(--chip-text);
+}
+
+/* ---------- Monkeys ---------- */
+.monkey {
+  position: absolute;
+  z-index: 3;
+  width: var(--m);
+  height: calc(var(--m) * 1.25);
+  pointer-events: none;
+  transition: filter var(--sky-time) ease 0.3s;
+}
+body.night .monkey { filter: brightness(0.8) saturate(0.85); }
+.m-inner { width: 100%; height: 100%; transform-origin: 50% 100%; }
+.monkey svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+.m-fur { fill: var(--fur); stroke: var(--ink); stroke-width: 2.5; }
+.m-face { fill: var(--face); }
+.m-face-o { fill: var(--face); stroke: var(--ink); stroke-width: 2; }
+.m-limb-o { fill: none; stroke: var(--ink); stroke-linecap: round; }
+.m-limb { fill: none; stroke: var(--fur); stroke-linecap: round; }
+
+/* Blinks are triggered one monkey at a time by forest.js */
+.m-eyes { transform-box: fill-box; transform-origin: center; }
+.monkey.blink .m-eyes { animation: blink 0.24s ease-in-out; }
+@keyframes blink { 50% { transform: scaleY(0.1); } }
+
+.m-sweat { transform-box: fill-box; animation: drip 1.4s ease-in infinite; }
+@keyframes drip { from { transform: translateY(0); opacity: 1; } to { transform: translateY(10px); opacity: 0; } }
+
+/* Holding a sign overhead: hands just over the sign's bottom edge */
+.monkey.hold { top: calc(100% - var(--m) * 0.09 - 6px); transform: translateX(-50%); }
+
+/* Room underneath every held sign for its monkeys and their branch */
+.edu, .skills { margin-bottom: calc(var(--m) * 1.16 + 24px); }
+
+/* Tug-of-war: one monkey each side, level with the sign */
+.monkey.pull { bottom: 6px; }
+.monkey.pull.left { right: calc(100% - var(--m) * 0.06 - 8px); }
+.monkey.pull.right { left: calc(100% - var(--m) * 0.06 - 8px); }
+.monkey.pull.right svg { transform: scaleX(-1); }
+.monkey.pull .m-inner { animation: lean var(--tug-time, 3s) ease-in-out infinite var(--tug-delay, 0s); }
+
+/* Studying a publication: standing level with the sign and holding it by its edge */
+.monkey.study { bottom: 2px; }
+.monkey.study.left { right: calc(100% - var(--m) * 0.14); }
+.monkey.study.right { left: calc(100% - var(--m) * 0.14); }
+.monkey.study.right svg { transform: scaleX(-1); }
+/* They sway a little, pivoting on the hand that grips the sign so it never slips */
+.monkey.study .m-inner { animation: hang-on 5s ease-in-out infinite alternate; }
+.monkey.study.left .m-inner { transform-origin: 92% 63%; }
+.monkey.study.right .m-inner { transform-origin: 8% 63%; }
+@keyframes hang-on { from { transform: rotate(-1.5deg); } to { transform: rotate(1.5deg); } }
+
+@keyframes lean {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+}
+@keyframes tug {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px) rotate(-0.4deg); }
+  75% { transform: translateX(10px) rotate(0.4deg); }
+}
+
+/* ---------- Sign headers: logo, title, date ---------- */
+.sign-head { display: flex; align-items: flex-start; gap: 16px; }
+.sign-title { flex: 1; min-width: 0; }
+.sign-title p { margin: 4px 0 0; }
+.sign-head .date { margin-top: 3px; }
+
+.logo {
+  flex: none;
+  width: auto;
+  height: 56px;
+  max-width: 140px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 2px solid var(--chip-line);
+  background: var(--badge-bg);
+  padding: 4px;
+  transition: filter var(--sky-time) ease 0.3s;
+}
+body.night .logo { filter: brightness(0.82); }
+/* The VQC logo is white on black, so its badge is black edge to edge */
+.logo[src$="vqc.svg"] { padding: 0; background: #000; border-color: #000; }
+
+/* ---------- Education ---------- */
+.gpa { font-size: 15px; color: var(--muted); }
+.gpa strong { font: 400 20px/1 var(--display); color: var(--blue); margin-left: 4px; }
+
+/* ---------- Experience ---------- */
+.jobs { list-style: none; margin: 0; padding: 0; }
+
+.job { position: relative; margin: 0 calc(var(--m) * 0.95) 22px; }
+.job .card { animation: tug var(--tug-time, 3s) ease-in-out infinite var(--tug-delay, 0s); }
+.job .muted { font-size: 14px; }
+.org-link { color: inherit; text-decoration: underline; text-decoration-color: rgba(107, 68, 35, 0.35); text-underline-offset: 3px; }
+a.logo-link { flex: none; display: block; border-radius: 10px; }
+
+.points { margin: 14px 0 0; padding: 0; list-style: none; }
+.points li { position: relative; padding-left: 18px; margin-top: 8px; color: var(--body-copy); font-size: 15px; }
+.points li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+/* ---------- Projects ---------- */
+.projects, .hobbies {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: calc(var(--m) * 1.16 + 24px) 24px;
+  margin-bottom: calc(var(--m) * 1.16 + 24px);
+}
+
+.project { display: flex; flex-direction: column; gap: 10px; }
+.project p { margin: 0 0 6px; color: var(--body-copy); font-size: 15px; flex: 1; }
+.project h3 { font: 400 23px/1.2 var(--display); letter-spacing: 0.01em; }
+.project-link { color: inherit; text-decoration: none; }
+
+/* ---------- Skills ---------- */
+.skills { display: grid; gap: 4px; }
+.skill-group .label { margin-top: 18px; }
+.skill-group:first-child .label { margin-top: 0; }
+
+/* ---------- Publications ---------- */
+/* Compact, tightly stacked signs so a long list stays short. Each has one
+   monkey studying it from the side, alternating left and right. */
+.pubs { display: grid; gap: 18px; }
+.pub {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 calc(var(--m) * 0.95);
+  padding: 18px 24px;
+}
+.pub h3 { font: 400 19px/1.3 var(--display); letter-spacing: 0.01em; }
+.pub-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.authors { margin: 0; color: var(--muted); font-size: 15px; }
+.authors strong { color: var(--text); }
+.chip-link { display: inline-block; text-decoration: none; font: 500 12px/1.4 var(--mono); }
+
+/* ---------- Monkeying Around page ---------- */
+/* A shorter opening sky with no photo */
+/* (top padding keeps the title clear of the sun) */
+.scene.scene-sub { min-height: 78vh; min-height: 78svh; padding-top: 260px; padding-bottom: 200px; }
+.scene-sub .hero { grid-template-columns: 1fr; }
+
+
+.hobbies { align-items: start; } /* each sign is only as tall as its own text */
+.hobby { display: flex; flex-direction: column; gap: 8px; }
+.hobby p { margin: 0; color: var(--body-copy); font-size: 15px; }
+.hobby h3 { font: 400 23px/1.2 var(--display); letter-spacing: 0.01em; }
+.hobby-emoji {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  font-size: 24px;
+  border-radius: 50%;
+  background: var(--chip-bg);
+  border: 2px solid var(--chip-line);
+}
+
+/* Live chess.com stats on the Chess sign */
+.chess-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin: 4px 0 6px; }
+.cs-main { display: flex; flex-direction: column; margin: 0; }
+.cs-num { font: 400 38px/1 var(--display); color: var(--text); }
+.chess-stats:not(.loaded) .cs-num { color: var(--faint); }
+.cs-label { margin-top: 4px; font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); }
+.cs-row { display: flex; gap: 16px; margin: 0; padding-left: 20px; border-left: 2px solid var(--chip-line); }
+.cs-row dt { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); }
+.cs-row dd { margin: 5px 0 0; font: 600 17px/1 var(--sans); color: var(--text); }
+.hobby-chess .chips { margin-top: auto; }
+.hobby-chess .hobby-emoji { background: var(--badge-bg); } /* the black pawn needs a light badge at night */
+
+/* The bookshelf sign: one row per piece, each with a little book spine */
+.shelf-sign { margin-bottom: calc(var(--m) * 1.16 + 24px); }
+.shelf { display: grid; margin: 0; padding: 0; list-style: none; }
+.book { display: flex; gap: 18px; align-items: flex-start; padding: 18px 0; border-top: 2px dashed var(--chip-line); }
+.book:first-child { padding-top: 0; border-top: 0; }
+.book:last-child { padding-bottom: 0; }
+.spine {
+  flex: none;
+  width: 22px;
+  height: 64px;
+  margin-top: 4px;
+  border-radius: 3px 5px 5px 3px;
+  border: 2px solid var(--ink);
+  background:
+    linear-gradient(transparent 9px, rgba(255, 255, 255, 0.55) 9px 12px, transparent 12px calc(100% - 12px), rgba(255, 255, 255, 0.55) calc(100% - 12px) calc(100% - 9px), transparent 0),
+    var(--spine);
+  transform: rotate(-4deg);
+}
+.book:nth-child(even) .spine { transform: rotate(3deg); }
+.book-kind { margin: 0 0 4px; font: 500 12px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--sun); }
+.book h3 { font: 400 23px/1.2 var(--display); letter-spacing: 0.01em; }
+.book h3 a { color: inherit; text-decoration: none; }
+.book h3 a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.book p:last-child { margin: 6px 0 0; color: var(--body-copy); font-size: 15px; }
+
+/* ---------- Reading page (read.html) ---------- */
+/* No sky, no forest, nothing moving: a sheet of paper on a calm leafy green */
+body.reading { background: #d3e5c4; }
+body.reading.night { background: #0f1a2e; }
+html:has(body.reading) { background: #d3e5c4; }
+.reader { max-width: 800px; padding-top: 110px; display: grid; justify-items: start; gap: 20px; }
+.paper { width: 100%; padding: clamp(28px, 7vw, 72px) clamp(22px, 7vw, 76px); }
+.piece-kind { margin: 0 0 10px; font: 500 12px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--sun); }
+.piece-title { font: 400 clamp(34px, 5.4vw, 50px)/1.08 var(--display); letter-spacing: 0.005em; color: var(--text); text-shadow: none; }
+.piece-byline { margin: 12px 0 0; padding-bottom: 28px; border-bottom: 2px dashed var(--chip-line); color: var(--muted); font-size: 15px; }
+.piece-body { padding-top: 28px; font-size: clamp(17px, 1.9vw, 19px); line-height: 1.75; color: var(--body-copy); }
+.piece-body p { margin: 0; text-indent: 1.6em; }
+.piece-body > :first-child, .piece-body h2 + p, .piece-body hr + p, .piece-body p.after-pause { text-indent: 0; }
+.piece-body .after-pause { margin-top: 1.3em; }
+.piece-body h2 { margin: 1.8em 0 0.7em; font: 400 26px/1.2 var(--display); color: var(--text); }
+.piece-body > h2:first-child { margin-top: 0; }
+.piece-body ul { margin: 0.6em 0 0.6em 1.6em; padding: 0; }
+.piece-body li { margin: 0.3em 0; }
+.piece-body figure { margin: 1.4em 0; }
+.piece-body figure img { display: block; width: 100%; height: auto; border-radius: 10px; border: 3px solid var(--wood-dark, #7a4a22); }
+.piece-body figure + p { text-indent: 0; }
+.scene-break { margin: 1.4em 0; border: 0; text-align: center; }
+.scene-break::after { content: "· · ·"; letter-spacing: 0.5em; color: var(--faint); }
+.piece-end { margin: 36px 0 0; text-align: center; letter-spacing: 0.5em; color: var(--faint); }
+.reader-footer { padding: 40px 16px 56px; text-align: center; }
+.reader-footer .footer-note { color: #5b6e4f; }
+body.night .reader-footer .footer-note { color: rgba(255, 255, 255, 0.6); }
+
+/* ---------- Forest (drawn by forest.js) ---------- */
+.under-a { stop-color: #3f8a4a; }
+.under-b { stop-color: #24582f; }
+.ground-a { stop-color: #5cb85c; }
+.ground-b { stop-color: #2f7d3a; }
+
+.leaf-far { fill: #78c27a; }
+.leaf-far-d { fill: #5fae68; }
+.leaf-far-h { fill: #97d891; }
+.leaf-mid { fill: #4ba358; }
+.leaf-mid-d { fill: #388b48; }
+.leaf-mid-h { fill: #6bbf68; }
+.leaf-near { fill: #3e9a48; }
+.leaf-near-d { fill: #2a7437; }
+.leaf-near-h { fill: #68c15c; }
+
+.bark, .branch { fill: #7b4b2a; stroke: #4a2c14; stroke-width: 3; stroke-linejoin: round; }
+.bark-hi { fill: #9a6538; }
+.bark-line { fill: none; stroke: #573318; stroke-width: 3; stroke-linecap: round; opacity: 0.6; }
+.knot { fill: #4a2c14; }
+.twig { fill: none; stroke: #7b4b2a; stroke-width: 6; stroke-linecap: round; }
+.bark-far { fill: #6c5a49; }
+.bark-mid { fill: #5d4330; }
+.ray { fill: #fffbe0; opacity: 0.08; }
+.tuft { fill: none; stroke: #2e7d32; stroke-width: 2.2; stroke-linecap: round; }
+.shroom { fill: #e53935; }
+
+.vine { position: absolute; width: 24px; transform-origin: 50% 0; animation: sway var(--sway, 6s) ease-in-out infinite alternate var(--delay, 0s); }
+.vine svg { display: block; overflow: visible; }
+.vine-stem { fill: none; stroke: #2f7d3a; stroke-width: 3; stroke-linecap: round; }
+@keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+
+/* Night: the forest takes on darker, bluer versions of its colours. Only the
+   trees and ground change, so the sky between the tree tops matches the sky above. */
+.forest svg *, .vine * { transition: fill var(--sky-time) ease 0.3s, stroke var(--sky-time) ease 0.3s, stop-color var(--sky-time) ease 0.3s, opacity var(--sky-time) ease 0.3s; }
+body.night :is(.under-a) { stop-color: #133328; }
+body.night :is(.under-b) { stop-color: #0b201a; }
+body.night :is(.ground-a) { stop-color: #1c4332; }
+body.night :is(.ground-b) { stop-color: #0e2e20; }
+body.night :is(.leaf-far) { fill: #254743; }
+body.night :is(.leaf-far-d) { fill: #1d4039; }
+body.night :is(.leaf-far-h) { fill: #2e4f4f; }
+body.night :is(.leaf-mid) { fill: #173c30; }
+body.night :is(.leaf-mid-d) { fill: #113327; }
+body.night :is(.leaf-mid-h) { fill: #214639; }
+body.night :is(.leaf-near) { fill: #133827; }
+body.night :is(.leaf-near-d) { fill: #0d2a1e; }
+body.night :is(.leaf-near-h) { fill: #204732; }
+body.night :is(.bark, .branch) { fill: #261b17; }
+body.night :is(.bark-hi) { fill: #2f251f; }
+body.night :is(.knot) { fill: #17100b; }
+body.night :is(.bark-far) { fill: #212128; }
+body.night :is(.bark-mid) { fill: #1d191a; }
+body.night :is(.ray) { fill: #4e5c7a; }
+body.night :is(.shroom) { fill: #46151d; }
+body.night :is(.bark, .branch) { stroke: #17100b; }
+body.night .vine-stem { stroke: #0e2e20; }
+body.night .ray { opacity: 0.03; }
+body.night .flower, body.night .mush { opacity: 0.45; }
+
+/* The fireflies come out */
+.fireflies { position: absolute; inset: 0; opacity: 0; transition: opacity var(--sky-time) ease 0.8s; }
+body.night .fireflies { opacity: 1; }
+.firefly {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbb0 0 22%, rgba(255, 238, 110, 0.55) 40%, transparent 70%);
+  animation: firefly var(--t, 5s) ease-in-out infinite alternate var(--d, 0s);
+  animation-play-state: paused;
+}
+body.night .firefly { animation-play-state: running; }
+@keyframes firefly {
+  0% { transform: translate(0, 0); opacity: 0.2; }
+  30% { opacity: 1; }
+  60% { opacity: 0.4; }
+  100% { transform: translate(24px, -30px); opacity: 1; }
+}
+
+/* ---------- Footer: the forest floor ---------- */
+.footer {
+  position: relative;
+  margin-top: clamp(60px, 9vw, 100px);
+  padding: 60px 16px 200px;
+  text-align: center;
+  color: #fff;
+}
+
+.footer-cta { margin: 0; font: 400 clamp(34px, 6vw, 56px)/1.1 var(--display); text-shadow: 0 2px 16px rgba(10, 40, 15, 0.5); }
+
+.footer-email {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font: 500 clamp(14px, 2vw, 17px)/1.4 var(--mono);
+  color: var(--wood-dark);
+  background: var(--cream);
+  border: 3px solid var(--wood);
+  text-decoration: none;
+  word-break: break-all;
+  transition: background-color 0.2s ease;
+}
+.footer-email:hover { background: #fff; }
+
+.footer-note { margin: 22px 0 0; font: 400 12px/1 var(--mono); color: rgba(255, 255, 255, 0.85); }
+
+/* ---------- Entrance + reveal ---------- */
+.scene-content > * { animation: rise 1s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.scene-content > :nth-child(2) { animation-delay: 0.1s; }
+.scene-content > :nth-child(3) { animation-delay: 0.2s; }
+.scene-content > :nth-child(4) { animation-delay: 0.3s; }
+.scene-content > :nth-child(5) { animation-delay: 0.4s; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+
+/* Fade only, so monkeys stay lined up with their branches */
+.reveal { opacity: 0; transition: opacity 0.8s ease; }
+.reveal.in { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --sky-time: 0.01s; }
+  html { scroll-behavior: auto; }
+}
+
+/* Motion off (the plank in the nav, or the visitor's reduced-motion setting):
+   everything holds still in its resting pose */
+.still :is(.scene-content > *, .para, .m-inner, .job .card, .m-sweat, .vine, .firefly, .rays-wrap, .moon .zzz, .cloud, .cloud svg) { animation: none !important; }
+.still .reveal { opacity: 1; transition: none; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+  .projects, .hobbies { grid-template-columns: 1fr; }
+  .hero { grid-template-columns: 1fr; }
+  .scene { --photo-w: clamp(190px, 52vw, 250px); padding-top: 140px; }
+  .para { margin-top: calc(var(--photo-w) * 0.78); }
+  .clouds {
+    -webkit-mask-image: radial-gradient(ellipse 45% 22% at 50% calc(38% - 140px), rgba(0, 0, 0, 0.4) 40%, #000 100%);
+    mask-image: radial-gradient(ellipse 45% 22% at 50% calc(38% - 140px), rgba(0, 0, 0, 0.4) 40%, #000 100%);
+  }
+}
+
+/* No room beside the Experience signs on small screens, so the tug-of-war sits out */
+@media (max-width: 700px) {
+  :root { --m: 66px; }
+  .job { margin-inline: 0; }
+  .job .card { animation: none; }
+  .monkey.pull { display: none; }
+  /* Publications keep their monkeys, small and peeking in from the corner */
+  .pub { margin-inline: 0; }
+  .monkey.study { width: 52px; height: 65px; bottom: -8px; }
+  .monkey.study.left { right: calc(100% - 17px); }
+  .monkey.study.right { left: calc(100% - 17px); }
+}
+
+@media (max-width: 560px) {
+  .nav { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .nav nav { width: calc(100% + 8px); margin: 0 -4px; }
+  .motion-toggle, .lights-toggle { position: absolute; top: 14px; right: 16px; }
+  .reader { padding-top: 132px; }
+  .scene { padding-top: 210px; }
+  .orbit { top: 124px; left: auto; right: 20px; }
+  .scene.scene-sub { padding-top: 210px; }
+  .sign-head { flex-wrap: wrap; gap: 12px; }
+  .sign-head .date { order: 3; flex-basis: 100%; margin-top: -4px; }
+  .logo { height: 44px; }
+  .footer { padding-bottom: 170px; }
+}
+
+/* ---------- Résumé page ---------- */
+.resume-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.print-plank { cursor: pointer; }
+.resume { font-size: 15px; line-height: 1.5; color: var(--body-copy); }
+.resume a { color: inherit; text-decoration-color: var(--chip-line); text-underline-offset: 2px; }
+.rs-top { padding-bottom: 18px; border-bottom: 2px dashed var(--chip-line); }
+.rs-top h1 { font: 400 clamp(34px, 5.4vw, 46px)/1.05 var(--display); color: var(--text); text-shadow: none; }
+.rs-contact { margin: 8px 0 0; font: 400 13px/1.5 var(--mono); color: var(--muted); }
+.rs-section { margin-top: 26px; }
+.rs-section h2 { margin: 0 0 12px; font: 500 13px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--sun); }
+.rs-entry + .rs-entry, .rs-keep + .rs-entry { margin-top: 14px; }
+.rs-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.rs-head h3 { font: 700 16px/1.35 var(--sans); color: var(--text); }
+.rs-date { flex-shrink: 0; font: 500 12px/1.4 var(--mono); color: var(--muted); }
+.rs-sub { margin: 1px 0 0; color: var(--muted); font-style: italic; }
+.resume ul, .rs-pubs { margin: 6px 0 0; padding-left: 1.3em; }
+.resume li { margin: 3px 0; }
+.rs-summary { margin: 4px 0 0; }
+.rs-skills { display: grid; gap: 6px; margin: 0; }
+.rs-skills div { display: grid; grid-template-columns: 13em 1fr; gap: 12px; }
+.rs-skills dt { font-weight: 700; color: var(--text); }
+.rs-skills dd { margin: 0; }
+.rs-award p { margin: 0; }
+.rs-award + .rs-award, .rs-keep + .rs-award { margin-top: 6px; }
+@media (max-width: 560px) {
+  .rs-head { flex-direction: column; gap: 0; }
+  .rs-skills div { grid-template-columns: 1fr; gap: 0; }
+}
+
+/* Printing (or "Save as PDF") gives a plain black-and-white page */
+@media print {
+  @page { margin: 0.5in; }
+  html, body, body.reading, body.night { background: #fff !important; }
+  .nav, .night-sky, .resume-actions, .reader-footer { display: none !important; }
+  .reader { max-width: none; padding: 0; }
+  .paper { padding: 0; border: 0; background: none; }
+  .resume, .resume * { color: #000 !important; }
+  .resume { font-size: 10.5pt; line-height: 1.35; }
+  .rs-top h1 { font-size: 24pt; }
+  .rs-top { border-bottom: 1px solid #000; padding-bottom: 8px; }
+  .rs-section { margin-top: 14px; break-inside: auto; }
+  .rs-section h2 { border-bottom: 1px solid #999; padding-bottom: 3px; margin-bottom: 8px; }
+  .rs-entry, .rs-keep { break-inside: avoid; }
+  .rs-entry + .rs-entry, .rs-keep + .rs-entry { margin-top: 8px; }
+  .resume a { text-decoration: none; }
+}
