@@ -78,9 +78,9 @@
   fill("[data-publications]", () => pubs.items.map((p) => `
     <article class="card pub">
       <h3>${esc(p.title)}</h3>
-      <p class="authors">${p.authors.map((a) => (a === pubs.me ? `<strong>${esc(a)}</strong>` : esc(a))).join(", ")}</p>
+      <p class="authors">${p.authors.map((a, i) => (a === pubs.me ? `<strong>${esc(a)}</strong>` : esc(a)) + (i < (p.equal || 0) ? "*" : "")).join(", ")}</p>
       <div class="pub-meta">
-        <span class="date">${[p.status, p.venue, p.year].filter(Boolean).map(esc).join(" · ")}</span>
+        <span class="date">${[p.status, p.venue, p.year, p.equal && "*Equal contribution"].filter(Boolean).map(esc).join(" · ")}</span>
         ${p.links?.length ? `<ul class="chips">${p.links.map((l) => `<li><a class="chip chip-link" href="${esc(l.url)}">${esc(l.label)}</a></li>`).join("")}</ul>` : ""}
       </div>
     </article>`).join(""));

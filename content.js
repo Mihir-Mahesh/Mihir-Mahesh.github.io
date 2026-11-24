@@ -150,14 +150,15 @@ window.SITE = {
     ],
   },
 
-  // "me" is bolded in the author list.
+  // "me" is bolded in the author list. "equal: N" marks the first N authors as equal contributors (*).
   publications: {
     me: "Mihir Mahesh",
     // status shows where a paper stands; venue, year and links are optional
     items: [
       {
-        title: "A Multiprogramming Operating System for Neutral Atom Quantum Computers",
+        title: "A Runtime Multiprogramming Approach for Neutral Atom Quantum Computers",
         authors: ["Hongzheng Zhu", "Mihir Mahesh", "Runzhou Tao"],
+        equal: 2,
         status: "Under review",
       },
       {

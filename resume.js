@@ -46,8 +46,8 @@
 
     ${section("Publications", [`<ol class="rs-pubs">${pubs.items.map((p) => `
       <li><strong>${esc(p.title)}</strong>.
-        ${p.authors.map((a) => (a === pubs.me ? `<u>${esc(a)}</u>` : esc(a))).join(", ")}.
-        <em>${[p.status, p.venue, p.year].filter(Boolean).map(esc).join(", ")}</em>.</li>`).join("")}</ol>`])}
+        ${p.authors.map((a, i) => (a === pubs.me ? `<u>${esc(a)}</u>` : esc(a)) + (i < (p.equal || 0) ? "*" : "")).join(", ")}.
+        <em>${[p.status, p.venue, p.year].filter(Boolean).map(esc).join(", ")}</em>.${p.equal ? " *Equal contribution." : ""}</li>`).join("")}</ol>`])}
 
     ${section("Projects", projects.map((p) => entry({
       title: p.links?.length ? link(p.links[0].url, p.title) : esc(p.title),
